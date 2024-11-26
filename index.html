@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>biblequizapp</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Quiz Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Open+Sans:wght@300;600&display=swap" rel="stylesheet">
+  <style>
+    /* Add the existing styles here */
+       body {
+      font-family: 'Open Sans', sans-serif;
+      background: linear-gradient(to bottom, #c4e0e5, #4ca1af);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 3.5em;
+      margin-bottom: 20px;
+      color: #f9d342;
+    }
+
+    h2 {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: #f9d250;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      background-color: gray;
+      cursor: not-allowed;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    #background-music {
+      display: none;
+    }
+
+    #options button {
+      background-color: #2e8b57;
+      color: white;
+    }
+
+    #options button:hover {
+      background-color: #206030;
+    }
+
+    #music-controls button {
+      background-color: #800000;
+      color: white;
+    }
+
+    #music-controls button:hover {
+      background-color: #550000;
+    }
+  </style>
+</head>
+<body>
+  <audio id="background-music" loop autoplay>
+    <source src="https://www.bensound.com/bensound-music/bensound-ukulele.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <audio id="click-sound">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-classic-click-1117.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <div class="container">
+    <h1>BIBLE QUIZ GAME</h1>
+    <h2>by: Jerry C.</h2>
+    <div id="mode-buttons" class="buttons">
+      <button onclick="playClickSound(); startGame()">Start Game</button>
+    </div>
+    <div id="category-container" style="display: none;">
+      <p id="category-instruction">Select Category:</p>
+      <div id="category-buttons" class="buttons">
+        <button onclick="playClickSound(); selectCategory('Person')">Person</button>
+        <button onclick="playClickSound(); selectCategory('Place')">Place</button>
+        <button onclick="playClickSound(); selectCategory('Event')">Event</button>
+        <button onclick="playClickSound(); selectCategory('Others')">Others</button>
+      </div>
+    </div>
+    <div id="question-container" style="display: none;">
+      <p id="question"></p>
+      <div id="options" class="buttons"></div>
+      <div id="decision-buttons" class="buttons" style="display: none;">
+        <button onclick="playClickSound(); nextQuestion()">Continue</button>
+      </div>
+      <div id="additional-buttons" class="buttons" style="display: none;">
+        <button onclick="playClickSound(); playAgain()">Restart Game</button>
+        <button onclick="playClickSound(); exitGame()">Exit Game</button>
+      </div>
+    </div>
+    <p id="message"></p>
+    <p id="verse"></p>
+    <div id="end-buttons" class="buttons" style="display: none;">
+      <button onclick="playClickSound(); playAgain()">Restart Game</button>
+      <button onclick="playClickSound(); exitGame()">Exit Game</button>
+    </div>
+    <div id="music-controls" class="buttons">
+      <button id="music-toggle" onclick="playClickSound(); toggleMusic()">Pause Music</button>
+    </div>
+  </div>
+
+  <script>
+    const allQuestions = [
+      { question: "Who was the first man created by God?", answers: ["Eve", "Adam", "Cain", "Noah"], correct: "Adam", verse: "Genesis 2:7" },
+      { question: "Who built the Ark?", answers: ["Noah", "Moses", "Abraham", "David"], correct: "Noah", verse: "Genesis 6:14" },
+      { question: "What is the shortest verse in the Bible?", answers: ["Jesus wept.", "God is love.", "The Lord is my shepherd.", "Love one another."], correct: "Jesus wept.", verse: "John 11:35" },
+      { question: "What was the first miracle of Jesus?", answers: ["Healing the blind", "Turning water into wine", "Walking on water", "Feeding 5000 people"], correct: "Turning water into wine", verse: "John 2:1-11" }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let shuffledQuestions = []; // To hold shuffled questions
+    const backgroundMusic = document.getElementById("background-music");
+    const clickSound = document.getElementById("click-sound");
+
+    function playClickSound() {
+      clickSound.play();
+    }
+
+    // Shuffle function
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function startGame() {
+      document.getElementById("mode-buttons").style.display = "none";
+      document.getElementById("category-container").style.display = "block"; // Show category section
+      shuffledQuestions = shuffleArray([...allQuestions]); // Shuffle questions on every start
+    }
+
+    function selectCategory(category) {
+      currentQuestionIndex = 0;
+      score = 0;
+      document.getElementById("category-container").style.display = "none";
+      document.getElementById("question-container").style.display = "block"; // Show question container
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const questionData = shuffledQuestions[currentQuestionIndex];
+      document.getElementById("question").innerText = questionData.question;
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+
+      questionData.answers.forEach(answer => {
+        const button = document.createElement("button");
+        button.innerText = answer;
+        button.onclick = () => selectAnswer(button, answer);
+        optionsDiv.appendChild(button);
+      });
+
+      document.getElementById("decision-buttons").style.display = "none";
+      document.getElementById("additional-buttons").style.display = "flex"; // Show restart/exit options
+    }
+
+    function selectAnswer(button, selectedAnswer) {
+      const questionData = shuffledQuestions[currentQuestionIndex];
+      const allButtons = document.getElementById("options").getElementsByTagName("button");
+
+      for (const btn of allButtons) {
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+      }
+
+      if (selectedAnswer === questionData.correct) {
+        document.getElementById("message").innerText = "Correct!";
+        score++;
+      } else {
+        document.getElementById("message").innerText = `Wrong! The correct answer was: ${questionData.correct}.`;
+      }
+
+      document.getElementById("verse").innerText = questionData.verse;
+      document.getElementById("decision-buttons").style.display = "flex";
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex >= shuffledQuestions.length) {
+        document.getElementById("question").innerText = "Quiz Completed!";
+        document.getElementById("options").innerHTML = "";
+        document.getElementById("message").innerText = `Your score is ${score}/${shuffledQuestions.length}.`;
+        document.getElementById("verse").innerText = "";
+        document.getElementById("decision-buttons").style.display = "none";
+        document.getElementById("additional-buttons").style.display = "none"; // Hide restart/exit options
+        document.getElementById("end-buttons").style.display = "flex"; // Show only end buttons
+        return;
+      }
+
+      document.getElementById("message").innerText = "";
+      document.getElementById("verse").innerText = "";
+      document.getElementById("decision-buttons").style.display = "none";
+      loadQuestion();
+    }
+
+    function playAgain() {
+      score = 0;
+      currentQuestionIndex = 0;
+      document.getElementById("end-buttons").style.display = "none";
+      document.getElementById("decision-buttons").style.display = "none";
+      document.getElementById("question-container").style.display = "none"; // Hide question container
+      document.getElementById("category-container").style.display = "block"; // Show category selection
+      shuffledQuestions = shuffleArray([...allQuestions]); // Reshuffle questions
+    }
+
+    function exitGame() {
+      alert("Thank you for playing! Exiting game...");
+      location.reload();
+    }
+
+    function toggleMusic() {
+      const musicToggle = document.getElementById("music-toggle");
+      if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        musicToggle.innerText = "Pause Music";
+      } else {
+        backgroundMusic.pause();
+        musicToggle.innerText = "Play Music";
+      }
+    }
+  </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
